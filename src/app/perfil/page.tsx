@@ -48,38 +48,47 @@ export default function Perfil() {
   const handleLogout = () => {
     localStorage.removeItem("correo");
     localStorage.removeItem("contrasena");
-    router.push("/dashboard");
+    router.push("/login");
   };
 
-  if (mensaje) return <p>{mensaje}</p>;
-  if (!usuario) return <p>Cargando...</p>;
+  if (mensaje) return <p className="text-center text-red-500 mt-10">{mensaje}</p>;
+  if (!usuario) return <p className="text-center text-white mt-10">Cargando...</p>;
 
   if (usuario.rol === "profesor") {
     return (
-      <main className="p-8">
-        <h1 className="text-2xl font-bold mb-4">Panel del Profesor</h1>
-        <p>Aquí se mostrará la calificación más alta de cada alumno.</p>
-        <table className="mt-4 border">
-          <thead>
-            <tr>
-              <th className="border px-2">Nombre</th>
-              <th className="border px-2">Correo</th>
-              <th className="border px-2">Calificación más alta</th>
-              <th className="border px-2">Examen</th>
-            </tr>
-          </thead>
-          <tbody>
-            {mejores.map((m) => (
-              <tr key={m.correo}>
-                <td className="border px-2">{m.nombre}</td>
-                <td className="border px-2">{m.correo}</td>
-                <td className="border px-2">{m.calificacion}</td>
-                <td className="border px-2">{m.examen}</td>
+      <main className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white flex flex-col items-center justify-start p-8">
+        <h1 className="text-4xl font-extrabold text-indigo-400 mb-4 font-[cursive] tracking-wider text-center drop-shadow-lg">
+          Panel del Profesor
+        </h1>
+        <p className="text-lg text-gray-300 text-center mb-6">
+          Aquí se mostrará la calificación más alta de cada alumno.
+        </p>
+        <div className="overflow-x-auto w-full max-w-5xl">
+          <table className="w-full table-auto border-collapse border border-indigo-500 shadow-lg bg-gray-800 rounded-lg">
+            <thead className="bg-indigo-600 text-white">
+              <tr>
+                <th className="border border-indigo-500 px-4 py-2 text-center">Nombre</th>
+                <th className="border border-indigo-500 px-4 py-2 text-center">Correo</th>
+                <th className="border border-indigo-500 px-4 py-2 text-center">Calificación más alta</th>
+                <th className="border border-indigo-500 px-4 py-2 text-center">Examen</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-        <button onClick={handleLogout} className="mt-4 bg-red-500 text-white p-2 rounded">
+            </thead>
+            <tbody>
+              {mejores.map((m) => (
+                <tr key={m.correo} className="hover:bg-indigo-700 transition-colors">
+                  <td className="border border-indigo-500 px-4 py-2 text-center">{m.nombre}</td>
+                  <td className="border border-indigo-500 px-4 py-2 text-center">{m.correo}</td>
+                  <td className="border border-indigo-500 px-4 py-2 text-center">{m.calificacion}</td>
+                  <td className="border border-indigo-500 px-4 py-2 text-center">{m.examen}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <button
+          onClick={handleLogout}
+          className="mt-8 bg-red-600 hover:bg-red-700 transition-colors text-white font-semibold py-2 px-6 rounded-full shadow-md"
+        >
           Cerrar sesión
         </button>
       </main>

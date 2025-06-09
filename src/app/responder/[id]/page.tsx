@@ -43,12 +43,12 @@ export default function ResponderExamen() {
         body: new URLSearchParams({
           estudiante_id,
           examen_id: Array.isArray(id) ? id[0] : id || "",
-          pregunta_id: preguntas[indice].id, // <--- ¡Esto es clave!
+          pregunta_id: preguntas[indice].id,
           respuesta_texto: respuesta,
           tiempo_respuesta: "0",
           username: correo || "",
           password: contrasena || "",
-          enunciado: preguntas[indice].enunciado, // si tu prompt lo necesita
+          enunciado: preguntas[indice].enunciado,
         }).toString(),
       });
 
@@ -70,11 +70,12 @@ export default function ResponderExamen() {
     if (indice < preguntas.length - 1) {
       setIndice(indice + 1);
     } else {
-      // Llamar al endpoint /finalizar para obtener la calificación final
       const estudiante_id = localStorage.getItem("estudiante_id") || "1";
       try {
         const res = await fetch(
-          `http://localhost:8000/finalizar?estudiante_id=${estudiante_id}&examen_id=${Array.isArray(id) ? id[0] : id || ""}`,
+          `http://localhost:8000/finalizar?estudiante_id=${estudiante_id}&examen_id=${
+            Array.isArray(id) ? id[0] : id || ""
+          }`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -92,7 +93,6 @@ export default function ResponderExamen() {
 
   useEffect(() => {
     if (calificacionFinal !== null) {
-      // Espera 5 segundos y redirige
       const timer = setTimeout(() => {
         router.push("/examenes");
       }, 5000);
@@ -102,12 +102,13 @@ export default function ResponderExamen() {
 
   if (mensaje) {
     return (
-      <main className="p-4">
-        <h1 className="text-xl font-bold mb-4">Responder examen</h1>
-        <p>{mensaje}</p>
-        {/* Mostrar la calificación final siempre que exista */}
+      <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-black p-6 text-gray-100">
+        <h1 className="text-3xl font-extrabold mb-6 tracking-wide text-indigo-400 drop-shadow-lg">
+          Responder examen
+        </h1>
+        <p className="text-lg mb-4">{mensaje}</p>
         {calificacionFinal !== null && (
-          <div className="mt-4 p-2 bg-green-100 rounded text-black">
+          <div className="mt-4 p-4 bg-green-700 bg-opacity-80 rounded-lg shadow-md text-white font-semibold">
             <b>Calificación final:</b> {calificacionFinal}
           </div>
         )}
@@ -116,18 +117,21 @@ export default function ResponderExamen() {
   }
 
   return (
-    <main className="p-4">
-      <h1 className="text-xl font-bold mb-4">Responder examen</h1>
+    <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-black p-6 text-gray-100">
+      <h1 className="text-3xl font-extrabold mb-8 tracking-wide text-indigo-400 drop-shadow-lg">
+        Responder examen
+      </h1>
       {preguntas.length > 0 ? (
-        <div>
-          <div>
-            <b>
+        <div className="w-full max-w-3xl bg-gray-800 bg-opacity-70 rounded-xl p-8 shadow-lg">
+          <div className="mb-6">
+            <b className="text-lg">
               Pregunta {indice + 1} de {preguntas.length}
             </b>
-            <div className="mt-2 mb-2">{preguntas[indice].enunciado}</div>
+            <p className="mt-2 text-gray-300 text-lg">{preguntas[indice].enunciado}</p>
           </div>
+
           {!retro ? (
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               <input
                 type="text"
                 value={respuesta}
@@ -135,35 +139,38 @@ export default function ResponderExamen() {
                 placeholder="Escribe tu respuesta"
                 required
                 disabled={enviando}
+                className="rounded-md px-4 py-3 bg-gray-700 text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
-              <button type="submit" disabled={enviando}>
+              <button
+                type="submit"
+                disabled={enviando}
+                className="bg-indigo-600 hover:bg-indigo-700 transition-colors duration-300 text-white font-semibold py-3 rounded-md shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 {enviando ? "Enviando..." : "Enviar"}
               </button>
             </form>
           ) : (
             <div>
-              <div className="mt-4 p-2 bg-gray-100 rounded text-black">
-                <b>Retroalimentación IA:</b>
-                <div>{retro}</div>
+              <div className="mt-6 p-4 bg-gray-700 rounded-md shadow-inner text-gray-100">
+                <b className="block mb-2 text-indigo-300">Retroalimentación IA:</b>
+                <p>{retro}</p>
                 {calificacion !== null && (
-                  <div className="mt-2 text-black">
-                    <b>Calificación IA:</b> {calificacion}
-                  </div>
+                  <p className="mt-4 font-semibold text-indigo-400">
+                    Calificación IA: {calificacion}
+                  </p>
                 )}
               </div>
               <button
-                className="mt-4 bg-blue-500 text-white p-2 rounded"
+                className="mt-6 bg-blue-600 hover:bg-blue-700 transition-colors duration-300 text-white font-semibold py-3 rounded-md shadow-md"
                 onClick={handleSiguiente}
               >
-                {indice < preguntas.length - 1
-                  ? "Siguiente pregunta"
-                  : "Finalizar"}
+                {indice < preguntas.length - 1 ? "Siguiente pregunta" : "Finalizar"}
               </button>
             </div>
           )}
         </div>
       ) : (
-        <p>No hay preguntas para este examen.</p>
+        <p className="text-lg text-gray-400">No hay preguntas para este examen.</p>
       )}
     </main>
   );
