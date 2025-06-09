@@ -1,10 +1,11 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function Perfil() {
   const [usuario, setUsuario] = useState<any>(null);
   const [mensaje, setMensaje] = useState("");
+  const [mejores, setMejores] = useState<any[]>([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -36,6 +37,14 @@ export default function Perfil() {
       .catch(() => setMensaje("Error de conexión"));
   }, [router]);
 
+  useEffect(() => {
+    if (usuario?.rol === "profesor") {
+      fetch("http://localhost:8000/mejores-calificaciones")
+        .then(res => res.json())
+        .then(setMejores);
+    }
+  }, [usuario]);
+
   const handleLogout = () => {
     localStorage.removeItem("correo");
     localStorage.removeItem("contrasena");
@@ -50,6 +59,26 @@ export default function Perfil() {
       <main className="p-8">
         <h1 className="text-2xl font-bold mb-4">Panel del Profesor</h1>
         <p>Aquí se mostrará la calificación más alta de cada alumno.</p>
+        <table className="mt-4 border">
+          <thead>
+            <tr>
+              <th className="border px-2">Nombre</th>
+              <th className="border px-2">Correo</th>
+              <th className="border px-2">Calificación más alta</th>
+              <th className="border px-2">Examen</th>
+            </tr>
+          </thead>
+          <tbody>
+            {mejores.map((m) => (
+              <tr key={m.correo}>
+                <td className="border px-2">{m.nombre}</td>
+                <td className="border px-2">{m.correo}</td>
+                <td className="border px-2">{m.calificacion}</td>
+                <td className="border px-2">{m.examen}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
         <button onClick={handleLogout} className="mt-4 bg-red-500 text-white p-2 rounded">
           Cerrar sesión
         </button>

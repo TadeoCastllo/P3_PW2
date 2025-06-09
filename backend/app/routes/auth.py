@@ -36,8 +36,14 @@ async def login(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Correo o contraseña incorrectos",
         )
-    # Devuelve un mensaje simple
-    return {"mensaje": "Inicio de sesión exitoso"}
+    # Devuelve los datos clave del usuario
+    return {
+        "mensaje": "Inicio de sesión exitoso",
+        "id": user.id,
+        "correo": user.correo,
+        "rol": user.rol,
+        "nombre": user.nombre
+    }
 
 # Dependencia para rutas protegidas: pide usuario y contraseña en cada petición
 def basic_auth(

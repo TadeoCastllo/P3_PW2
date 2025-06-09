@@ -1,8 +1,10 @@
+from sqlalchemy import func, and_
+from app.models.user import Usuario
+from app.models.question import Respuesta, Resultado, Examen
+from app.schemas.schemas import ResultadoOut, MejorCalificacionOut
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.database.db import get_db
-from app.models.question import Respuesta, Resultado
-from app.schemas.schemas import ResultadoOut, MejorCalificacionOut
 
 router = APIRouter()
 
@@ -42,8 +44,9 @@ def resultados_estudiante(id: int, db: Session = Depends(get_db)):
 def obtener_todos_los_resultados(db: Session = Depends(get_db)):
     return db.query(Resultado).all()
 
-@router.get("/mejores", response_model=list[MejorCalificacionOut])
+@router.get("/mejores-calificaciones")
 def mejores_calificaciones(db: Session = Depends(get_db)):
+    # Subconsulta: para cada estudiante, su mejor calificación
     subq = (
         db.query(
             Resultado.estudiante_id,
@@ -52,9 +55,33 @@ def mejores_calificaciones(db: Session = Depends(get_db)):
         .group_by(Resultado.estudiante_id)
         .subquery()
     )
-    resultados = db.query(Resultado).join(
-        subq,
-        (Resultado.estudiante_id == subq.c.estudiante_id) &
-        (Resultado.calificacion_final == subq.c.mejor_calificacion)
-    ).all()
-    return resultados
+
+    # Ahora, obtenemos el examen_id y el título del examen donde obtuvo esa calificación
+    resultados = (
+        db.query(
+            Usuario.nombre,
+            Usuario.correo,
+            Resultado.calificacion_final,
+            Resultado.examen_id,
+            Examen.titulo
+        )
+        .join(Resultado, Usuario.id == Resultado.estudiante_id)
+        .join(Examen, Resultado.examen_id == Examen.id)
+        .join(subq, and_(
+            subq.c.estudiante_id == Resultado.estudiante_id,
+            subq.c.mejor_calificacion == Resultado.calificacion_final
+        ))
+        .filter(Usuario.rol == "estudiante")
+        .all()
+    )
+
+    return [
+        {
+            "nombre": r.nombre,
+            "correo": r.correo,
+            "calificacion": float(r.calificacion_final),
+            "examen_id": r.examen_id,
+            "examen": r.titulo
+        }
+        for r in resultados
+    ]

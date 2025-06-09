@@ -22,8 +22,10 @@ export default function Dashboard() {
     });
 
     if (res.ok) {
+      const data = await res.json();
       localStorage.setItem("correo", correo);
       localStorage.setItem("contrasena", contrasena);
+      localStorage.setItem("estudiante_id", data.id); // <--- Guarda el id real
       setMensaje("¡Inicio de sesión exitoso!");
       router.push("/perfil");
     } else {
