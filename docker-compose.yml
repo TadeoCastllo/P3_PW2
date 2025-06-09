@@ -35,7 +35,7 @@ services:
       test: ["CMD", "mysqladmin", "ping", "-uroot", "-proot"]
       interval: 5s
       timeout: 20s
-      retries: 10
+      retries: 30
     networks:
       - app-network
 

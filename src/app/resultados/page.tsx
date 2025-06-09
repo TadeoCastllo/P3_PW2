@@ -1,8 +1,0 @@
-export default function Resultados() {
-  return (
-    <main className="flex flex-col items-center justify-center h-screen">
-      <h1 className="text-2xl font-bold mb-4">Resultados</h1>
-      <p>Página en construcción. Aquí se mostrarán los resultados de tus exámenes.</p>
-    </main>
-  );
-}

@@ -19,7 +19,7 @@ export default function Examenes() {
     fetch("http://localhost:8000/examenes", {
       method: "GET",
       headers: {
-        "Authorization": "Basic " + btoa(`${correo}:${contrasena}`),
+        Authorization: "Basic " + btoa(`${correo}:${contrasena}`),
       },
     })
       .then(async (res) => {
@@ -41,24 +41,45 @@ export default function Examenes() {
   };
 
   return (
-    <main className="flex flex-col items-center justify-center h-screen">
-      <h1 className="text-2xl font-bold mb-4">Exámenes disponibles</h1>
-      <button onClick={handleLogout} className="mb-4 bg-red-500 text-white p-2 rounded">
-        Cerrar sesión
-      </button>
-      {mensaje && <p className="mt-4">{mensaje}</p>}
-      {examenes.length > 0 && (
-        <ul className="mt-4">
+    <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-gray-900 via-indigo-950 to-black p-8 text-gray-200">
+      <h1 className="text-4xl font-extrabold mb-10 tracking-wide text-indigo-400 drop-shadow-[0_2px_8px_rgba(79,70,229,0.9)]">
+        Exámenes disponibles
+      </h1>
+
+      {mensaje && (
+        <p className="mb-6 px-6 py-3 bg-red-800 rounded-md text-red-400 font-semibold drop-shadow-lg max-w-xl text-center">
+          {mensaje}
+        </p>
+      )}
+
+      {examenes.length > 0 ? (
+        <ul className="w-full max-w-3xl bg-gray-900 rounded-2xl p-10 shadow-lg shadow-indigo-900/70">
           {examenes.map((examen) => (
-            <li key={examen.id} className="border p-2 rounded mb-2">
+            <li
+              key={examen.id}
+              className="border border-indigo-700 rounded-lg p-5 mb-6 cursor-pointer hover:bg-indigo-900 hover:shadow-md hover:shadow-indigo-600 transition-all duration-300"
+            >
               <Link href={`/responder/${examen.id}`}>
-                <b className="cursor-pointer hover:underline">{examen.titulo}</b>
+                <b className="text-indigo-300 text-2xl hover:underline">
+                  {examen.titulo}
+                </b>
               </Link>
-              <p>{examen.descripcion}</p>
+              <p className="mt-3 text-indigo-400">{examen.descripcion}</p>
             </li>
           ))}
         </ul>
+      ) : (
+        <p className="text-indigo-500 mt-8 text-lg text-center">
+          No hay exámenes disponibles.
+        </p>
       )}
+
+      <button
+        onClick={handleLogout}
+        className="mt-12 bg-indigo-700 hover:bg-indigo-800 active:bg-indigo-900 transition-colors duration-300 text-white font-semibold py-4 px-10 rounded-3xl shadow-lg shadow-indigo-900/80"
+      >
+        Cerrar sesión
+      </button>
     </main>
   );
 }
