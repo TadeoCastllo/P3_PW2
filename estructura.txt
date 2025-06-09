@@ -1,0 +1,61 @@
+/proyecto-raiz
+│
+├── docker-compose.yml
+├── .env
+│
+├── backend/
+│   ├── app/
+│   │   ├── main.py
+│   │   ├── models/
+│   │   │   └── models.py
+│   │   ├── schemas/
+│   │   │   ├── user.py
+│   │   │   ├── question.py
+│   │   │   └── answer.py
+│   │   ├── routes/
+│   │   │   ├── auth.py
+│   │   │   ├── users.py
+│   │   │   ├── questions.py
+│   │   │   └── evaluation.py
+│   │   ├── services/
+│   │   │   ├── ia_service.py
+│   │   │   └── auth_service.py
+│   │   ├── database/
+│   │   │   └── db.py
+│   │   └── utils/
+│   │       └── security.py
+│   └── requirements.txt
+│   └── Dockerfile
+│
+├── src/                                  # Ahora está al nivel raíz (reemplazando frontend/)
+│   ├── app/
+│   │   ├── layout.tsx                    # Layout global
+│   │   ├── page.tsx                      # Página raíz (login)
+│   │   ├── dashboard/
+│   │   │   └── page.tsx                  # Página principal tras login
+│   │   ├── perfil/
+│   │   │   └── page.tsx                  # Ver perfil
+│   │   ├── responder/
+│   │   │   └── page.tsx                  # Contestar preguntas
+│   │   ├── resultados/
+│   │   │   └── page.tsx                  # Resultados
+│   │   └── not-found.tsx                 # Página 404
+│   ├── components/
+│   │   ├── Navbar.tsx
+│   │   ├── PreguntaCard.tsx
+│   │   └── PerfilCard.tsx
+│   ├── lib/
+│   │   ├── api.ts                        # Fetch wrapper
+│   │   └── auth.ts                       # Verificación de sesión/token
+│   ├── styles/
+│   │   └── globals.css
+│   ├── public/                           # Assets estáticos
+│   ├── next.config.ts                    # Config de Next.js
+│   ├── tsconfig.json                     # Config de TypeScript
+│   ├── package.json                      # Dependencias
+│   └── Dockerfile
+│
+├── db/
+│   └── init.sql                         # Script de base de datos
+│
+└── README.md
