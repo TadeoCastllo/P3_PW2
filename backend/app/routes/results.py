@@ -1,18 +1,38 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from sqlalchemy import func
-from app.database.db import SessionLocal
-from app.models.question import Resultado
+from app.database.db import get_db
+from app.models.question import Respuesta, Resultado
 from app.schemas.schemas import ResultadoOut, MejorCalificacionOut
 
 router = APIRouter()
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+@router.post("/finalizar")
+def finalizar_examen(estudiante_id: int, examen_id: int, db: Session = Depends(get_db)):
+    respuestas = db.query(Respuesta).filter(
+        Respuesta.estudiante_id == estudiante_id,
+        Respuesta.examen_id == examen_id
+    ).all()
+    if not respuestas:
+        return {"error": "No hay respuestas registradas"}
+
+    # Suma o promedio de calificaciones
+    total = sum(float(r.calificacion or 0) for r in respuestas)
+    calificacion_final = total / len(respuestas) if respuestas else 0
+
+    # Contar preguntas correctas (si tienes un criterio)
+    preguntas_correctas = sum(1 for r in respuestas if float(r.calificacion or 0) >= 6)  # ejemplo: >=6 es correcta
+
+    # Guardar resultado
+    resultado = Resultado(
+        estudiante_id=estudiante_id,
+        examen_id=examen_id,
+        calificacion_final=calificacion_final,
+        preguntas_correctas=preguntas_correctas
+    )
+    db.add(resultado)
+    db.commit()
+    db.refresh(resultado)
+    return {"calificacion_final": calificacion_final, "preguntas_correctas": preguntas_correctas}
 
 @router.get("/estudiante/{id}", response_model=list[ResultadoOut])
 def resultados_estudiante(id: int, db: Session = Depends(get_db)):

@@ -51,6 +51,7 @@ class PreguntaOut(PreguntaCreate):
     id: int
     class Config:
         from_attributes = True
+        use_enum_values = True  # <-- Esto fuerza la serialización como string
 
 class RespuestaCreate(BaseModel):
     estudiante_id: int

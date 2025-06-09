@@ -1,10 +1,9 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, Enum, JSON, DECIMAL, Boolean, TIMESTAMP, DateTime
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, JSON, DECIMAL, Boolean, TIMESTAMP, Enum as SqlEnum
 from sqlalchemy.orm import relationship
 from app.database.db import Base
-import enum
-from datetime import datetime
+from enum import Enum
 
-class TipoPregunta(enum.Enum):
+class TipoPregunta(str, Enum):
     opcion_multiple = "opcion_multiple"
     completar = "completar"
     codigo = "codigo"
@@ -25,12 +24,10 @@ class Pregunta(Base):
     examen_id = Column(Integer, ForeignKey("examenes.id"), nullable=False)
     contexto = Column(Text, nullable=False)
     enunciado = Column(Text, nullable=False)
-    tipo = Column(Enum(TipoPregunta), nullable=False)
+    tipo = Column(SqlEnum(TipoPregunta), nullable=False)  # <-- Usa SqlEnum aquí
     opciones = Column(JSON, nullable=True)
     respuesta_modelo = Column(Text)
     generada_por_ia = Column(Boolean, default=False)
-    texto = Column(String, nullable=False)
-    fecha_creacion = Column(DateTime, default=datetime.utcnow)
 
 class Respuesta(Base):
     __tablename__ = "respuestas"

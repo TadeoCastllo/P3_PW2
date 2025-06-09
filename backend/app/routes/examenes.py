@@ -6,6 +6,7 @@ from app.models.user import Usuario
 from app.schemas.schemas import ExamenCreate, ExamenOut, PreguntaOut
 from app.services.ia_client import generar_respuesta_con_ia
 import json
+import re
 
 router = APIRouter(prefix="/examenes", tags=["Examenes"])
 
@@ -34,26 +35,48 @@ def obtener_examen(examen_id: int, db: Session = Depends(get_db)):
 
 @router.get("/{examen_id}/preguntas", response_model=list[PreguntaOut])
 def obtener_preguntas_examen(examen_id: int, db: Session = Depends(get_db)):
+    print("Buscando preguntas en la base de datos...")
+    preguntas = db.query(Pregunta).filter(Pregunta.examen_id == examen_id).all()
+    print(f"Preguntas encontradas: {len(preguntas)}")
+    if preguntas:
+        return preguntas
+
+    print("No hay preguntas, generando con IA...")
     examen = db.query(Examen).filter(Examen.id == examen_id).first()
     if not examen:
+        print("Examen no encontrado")
         raise HTTPException(status_code=404, detail="Examen no encontrado")
 
-    # Prompt para la IA
     prompt = (
         f"Genera 5 preguntas abiertas para un examen de programación básica sobre el tema: '{examen.titulo}'. "
         "Devuelve la respuesta en formato JSON como una lista de objetos, cada uno con el campo 'enunciado'. "
         "Ejemplo: [{\"enunciado\": \"¿Qué es una variable en programación?\"}, ...]"
     )
+    print("Llamando a la IA...")
     respuesta_ia = generar_respuesta_con_ia(prompt)
-    print("Respuesta IA:", respuesta_ia)  # <-- agrega esto
+    print("Respuesta IA recibida")
+    respuesta_ia = re.sub(r"^```json|^```|```$", "", respuesta_ia.strip(), flags=re.MULTILINE).strip()
 
     try:
-        preguntas = json.loads(respuesta_ia)
-        # Validar que sea una lista de objetos con 'enunciado'
-        if not isinstance(preguntas, list) or not all("enunciado" in p for p in preguntas):
+        preguntas_ia = json.loads(respuesta_ia)
+        if not isinstance(preguntas_ia, list) or not all("enunciado" in p for p in preguntas_ia):
             raise ValueError
     except Exception:
         raise HTTPException(status_code=500, detail="La IA no devolvió preguntas válidas.")
 
-    # Convertir a formato PreguntaOut (puedes agregar más campos si tu esquema lo requiere)
-    return [{"enunciado": p["enunciado"]} for p in preguntas]
+    # Insertar preguntas generadas en la base de datos
+    nuevas_preguntas = []
+    for p in preguntas_ia:
+        nueva = Pregunta(
+            examen_id=examen.id,
+            enunciado=p["enunciado"],
+            contexto="Pregunta generada automáticamente.",
+            tipo="completar"
+        )
+        db.add(nueva)
+        nuevas_preguntas.append(nueva)
+    db.commit()
+    # Refresca para obtener los IDs reales
+    for p in nuevas_preguntas:
+        db.refresh(p)
+    return nuevas_preguntas

@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 
 export default function ResponderExamen() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const id = searchParams.get("id");
+  const params = useParams();
+  const id = params.id;
 
   const [preguntas, setPreguntas] = useState<any[]>([]);
   const [mensaje, setMensaje] = useState("");
@@ -14,6 +14,8 @@ export default function ResponderExamen() {
   const [respuesta, setRespuesta] = useState("");
   const [retro, setRetro] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
+  const [calificacion, setCalificacion] = useState<number | null>(null);
+  const [calificacionFinal, setCalificacionFinal] = useState<number | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -40,28 +42,21 @@ export default function ResponderExamen() {
         },
         body: new URLSearchParams({
           estudiante_id,
-          examen_id: id || "",
+          examen_id: Array.isArray(id) ? id[0] : id || "",
+          pregunta_id: preguntas[indice].id, // <--- ¡Esto es clave!
           respuesta_texto: respuesta,
           tiempo_respuesta: "0",
           username: correo || "",
           password: contrasena || "",
-          enunciado: preguntas[indice].enunciado, // Aquí se envía el enunciado
+          enunciado: preguntas[indice].enunciado, // si tu prompt lo necesita
         }).toString(),
       });
 
       if (!res.ok) throw new Error("Error al enviar la respuesta");
       const data = await res.json();
       setRetro(data.retroalimentacion_ia || "Respuesta recibida.");
-
+      setCalificacion(data.calificacion);
       setRespuesta("");
-      if (indice < preguntas.length - 1) {
-        setTimeout(() => {
-          setIndice(indice + 1);
-          setRetro(null);
-        }, 2000);
-      } else {
-        setMensaje("¡Examen completado!");
-      }
     } catch (err) {
       setMensaje("Error al enviar la respuesta");
     } finally {
@@ -69,11 +64,53 @@ export default function ResponderExamen() {
     }
   };
 
+  const handleSiguiente = async () => {
+    setRetro(null);
+    setCalificacion(null);
+    if (indice < preguntas.length - 1) {
+      setIndice(indice + 1);
+    } else {
+      // Llamar al endpoint /finalizar para obtener la calificación final
+      const estudiante_id = localStorage.getItem("estudiante_id") || "1";
+      try {
+        const res = await fetch(
+          `http://localhost:8000/finalizar?estudiante_id=${estudiante_id}&examen_id=${Array.isArray(id) ? id[0] : id || ""}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+        const data = await res.json();
+        console.log("Respuesta finalizar:", data);
+        setCalificacionFinal(data.calificacion_final);
+        setMensaje("¡Examen completado!");
+      } catch {
+        setMensaje("¡Examen completado! (No se pudo obtener la calificación final)");
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (calificacionFinal !== null) {
+      // Espera 5 segundos y redirige
+      const timer = setTimeout(() => {
+        router.push("/examenes");
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [calificacionFinal, router]);
+
   if (mensaje) {
     return (
       <main className="p-4">
         <h1 className="text-xl font-bold mb-4">Responder examen</h1>
         <p>{mensaje}</p>
+        {/* Mostrar la calificación final siempre que exista */}
+        {calificacionFinal !== null && (
+          <div className="mt-4 p-2 bg-green-100 rounded text-black">
+            <b>Calificación final:</b> {calificacionFinal}
+          </div>
+        )}
       </main>
     );
   }
@@ -89,23 +126,39 @@ export default function ResponderExamen() {
             </b>
             <div className="mt-2 mb-2">{preguntas[indice].enunciado}</div>
           </div>
-          <form onSubmit={handleSubmit}>
-            <input
-              type="text"
-              value={respuesta}
-              onChange={(e) => setRespuesta(e.target.value)}
-              placeholder="Escribe tu respuesta"
-              required
-              disabled={enviando}
-            />
-            <button type="submit" disabled={enviando}>
-              {enviando ? "Enviando..." : "Enviar"}
-            </button>
-          </form>
-          {retro && (
-            <div className="mt-4 p-2 bg-gray-100 rounded">
-              <b>Retroalimentación IA:</b>
-              <div>{retro}</div>
+          {!retro ? (
+            <form onSubmit={handleSubmit}>
+              <input
+                type="text"
+                value={respuesta}
+                onChange={(e) => setRespuesta(e.target.value)}
+                placeholder="Escribe tu respuesta"
+                required
+                disabled={enviando}
+              />
+              <button type="submit" disabled={enviando}>
+                {enviando ? "Enviando..." : "Enviar"}
+              </button>
+            </form>
+          ) : (
+            <div>
+              <div className="mt-4 p-2 bg-gray-100 rounded text-black">
+                <b>Retroalimentación IA:</b>
+                <div>{retro}</div>
+                {calificacion !== null && (
+                  <div className="mt-2 text-black">
+                    <b>Calificación IA:</b> {calificacion}
+                  </div>
+                )}
+              </div>
+              <button
+                className="mt-4 bg-blue-500 text-white p-2 rounded"
+                onClick={handleSiguiente}
+              >
+                {indice < preguntas.length - 1
+                  ? "Siguiente pregunta"
+                  : "Finalizar"}
+              </button>
             </div>
           )}
         </div>
